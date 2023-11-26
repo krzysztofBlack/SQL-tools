@@ -1,0 +1,192 @@
+
+select @@VERSION
+
+use ksx 
+
+sp_spaceused
+
+USE [master]
+GO
+
+GO
+ALTER DATABASE [ksx] MODIFY FILE ( NAME = N'ksX_log1', MAXSIZE = 512MB )
+GO
+
+GO
+ALTER DATABASE [ksx] ADD FILE ( NAME = N'ksX_log1', FILENAME = N'C:\SQL\MSSQL15.SQL1\MSSQL\DATA\L1\KSX_LOG1.LDF' , SIZE = 8192KB , FILEGROWTH = 65536KB ) TO FILEGROUP [PRIMARY]
+GO
+
+GO
+ALTER DATABASE [ksx] ADD FILE ( NAME = N'ksX_log3', FILENAME = N'E:\SQL\KSX_LOG3.LDF' , SIZE = 64MB , FILEGROWTH = 64MB ) TO FILEGROUP [PRIMARY]
+GO
+
+ALTER DATABASE [ksx] ADD LOG FILE ( NAME = N'ks_logN1', FILENAME = N'E:\SQL\ksx_logN1.LDF' , SIZE = 128MB , MAXSIZE = 512MB , FILEGROWTH = 64MB )
+GO
+
+ALTER DATABASE [ksx] ADD LOG FILE ( NAME = N'ks_logN2', FILENAME = N'E:\SQL\ksx_logN2.LDF' , SIZE = 96MB , MAXSIZE = 5120MB , FILEGROWTH = 64MB )
+
+
+ALTER DATABASE [ksx] ADD LOG FILE ( NAME = N'ks_logN3', FILENAME = N'E:\SQL\ksx_logN3.LDF' , SIZE = 96MB , MAXSIZE = 5120MB , FILEGROWTH = 64MB )
+ALTER DATABASE [ksx] ADD LOG FILE ( NAME = N'ks_logN4', FILENAME = N'E:\SQL\ksx_logN3=4.LDF' , SIZE = 128MB , MAXSIZE = 51200MB , FILEGROWTH = 64MB )
+
+
+GO
+ALTER DATABASE [ksx] ADD FILE ( NAME = N'ks_3', FILENAME = N'C:\SQL\MSSQL15.SQL1\MSSQL\DATA\D1\ks_3.ndf' , SIZE = 8192KB , MAXSIZE = 524288KB , FILEGROWTH = 65536KB ) TO FILEGROUP [PRIMARY]
+GO
+
+ALTER DATABASE [ksx] MODIFY FILE ( NAME = N'ks_logN3', SIZE = 296MB , MAXSIZE = 512MB )
+GO
+
+-- init reset file size
+BACKUP LOG [ksx] TO  DISK = N'C:\SQL\MSSQL15.SQL1\MSSQL\Backup\ksX_log.TRN' WITH NOFORMAT, INIT,  NAME = N'ksx-Tran Database Backup', SKIP, NOREWIND, NOUNLOAD, COMPRESSION,  STATS = 10, CHECKSUM
+GO
+
+ALTER DATABASE [ksx] MODIFY FILE ( NAME = N'ksx_log', MAXSIZE = 1500MB , FILEGROWTH = 64MB )
+GO
+
+BACKUP DATABASE [ksx] TO  DISK = N'E:\SQL\ksX_db.bac' WITH NOFORMAT, INIT,  
+NAME = N'ksx-Full Database Backup', SKIP, NOREWIND, 
+NOUNLOAD, COMPRESSION,  STATS = 10, CHECKSUM
+--,maxtransfersize = 4194304
+
+--BACKUP DATABASE successfully processed 1483465 pages in 16.239 seconds (713.687 MB/sec).
+--BACKUP DATABASE successfully processed 1483465 pages in 16.016 seconds (723.624 MB/sec).
+
+use	ksx
+
+ALTER DATABASE [ksx] MODIFY FILE ( NAME = N'ksx', FILEGROWTH = 0)
+
+
+SELECT TYPE_DESC, NAME, size/128 as Size, max_size/128 as MaxSize, growth/128 as Growth, is_percent_growth, 
+size/128.0 - CAST(FILEPROPERTY(name, 'SpaceUsed') AS INT)/128.0 AS FreeSpaceMB
+, CAST(FILEPROPERTY(name, 'SpaceUsed') AS INT)/128 AS SpaceOccupiesMB
+,Free_Perc = (CAST(FILEPROPERTY(name, 'SpaceUsed') AS INT)/128.0) / (size/128.0)
+,*
+FROM sys.database_files
+order by 1
+
+
+dbcc
+
+select top 100 * from ela
+
+sp_help ela_kasuj
+
+alter table ela_kasuj
+alter column id1 [bigint] not null
+
+
+update ela
+set durability_desc = 'beksa1'
+
+select top 100000 * into ela_kasuj 
+from ela
+
+insert into ela_kasuj 
+select top 5000000 * from ela
+
+
+sp_spaceused ela
+
+DBCC SHRINKFILE (ks_logN1, EMPTYFILE);
+GO
+
+-- Remove the data file from the database.
+ALTER DATABASE ksx
+REMOVE FILE ks_logN1;
+GO
+
+DBCC SHRINKFILE (ks_logN2, EMPTYFILE);
+GO
+
+DBCC SHRINKFILE (ksx_log, 256);
+GO
+
+
+-- Remove the data file from the database.
+ALTER DATABASE ksx
+REMOVE FILE ks_logN2;
+GO
+
+DBCC SHRINKFILE (ksx_log, EMPTYFILE);
+GO
+
+-- Remove the data file from the database.
+ALTER DATABASE ksx
+REMOVE FILE ksx_log;
+GO
+
+DBCC SHRINKFILE (ks_logN4, 1024);
+
+DBCC SHRINKFILE (ks_logN4, emptyfile);
+
+DBCC SHRINKFILE (ksx_log3, emptyfile);
+
+DBCC SHRINKFILE (ksx_log3, 100);
+
+
+ALTER DATABASE ksx
+REMOVE FILE ks_logN4;
+GO
+
+--After adding or removing file conduct full backup to remove file from system view  catalogue
+
+ALTER DATABASE ksx
+REMOVE FILE ksx_log3;
+GO
+
+ALTER DATABASE ksx
+REMOVE FILE ksx;
+GO
+
+DBCC SHRINKFILE (ksx, 512);
+
+
+use master
+checkpoint
+
+alter table ela_kasuj
+alter column id1 [bigint] not null
+
+alter table ela_kasuj
+alter column id1 [bigint] not null
+
+EXEC sp_rename 'dbo.ela_kasuj.id1', 'id11', 'column';
+
+alter table ela_kasuj
+add id1 [bigint] not null default (12)
+
+alter table ela_kasuj
+drop column id11
+
+
+
+
+
+
+
+
+
+
+
+
+
+SELECT
+  t.object_id,
+  OBJECT_NAME(t.object_id) ObjectName,
+  sum(u.total_pages) * 8 Total_Reserved_kb,
+  sum(u.used_pages) * 8 Used_Space_kb,
+  u.type_desc,
+  max(p.rows) RowsCount
+FROM
+  sys.allocation_units u
+  JOIN sys.partitions p on u.container_id = p.hobt_id
+  JOIN sys.tables t on p.object_id = t.object_id
+GROUP BY
+  t.object_id,
+  OBJECT_NAME(t.object_id),
+  u.type_desc
+ORDER BY
+  Used_Space_kb desc,
+  ObjectName;
+
